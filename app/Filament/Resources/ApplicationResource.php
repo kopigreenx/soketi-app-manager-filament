@@ -55,7 +55,10 @@ class ApplicationResource extends Resource
                 ToggleColumn::make('enabled')
                     ->label('Active Status')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->afterStateUpdated(function ($record, $state) {
+                        $record->clearCache();
+                    }),
                 TextColumn::make('creator.name')
                     ->searchable()
                     ->sortable(),

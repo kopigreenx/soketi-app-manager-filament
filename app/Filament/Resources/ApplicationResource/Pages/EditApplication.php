@@ -2,12 +2,16 @@
 
 namespace App\Filament\Resources\ApplicationResource\Pages;
 
+use App\Enums\WebhookEvent;
+use App\Enums\WebhookFilter;
 use App\Filament\Resources\ApplicationResource;
 use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -46,9 +50,13 @@ class EditApplication extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $data['updated_by'] = auth()->id();
-        $data['webhooks'] = json_decode($data['webhooks']);
 
         return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        $this->record->clearCache();
     }
 
     public function form(Form $form): Form
@@ -56,8 +64,8 @@ class EditApplication extends EditRecord
         return $form
             ->schema([
                 Tabs::make()
-                    ->columnSpanFull()
                     ->columns(4)
+                    ->columnSpan(4)
                     ->tabs([
                         Tab::make('General')
                             ->icon('heroicon-o-information-circle')
@@ -69,17 +77,21 @@ class EditApplication extends EditRecord
                                     ->unique(ignoreRecord: true)
                                     ->columnSpan(3),
                                 Toggle::make('enabled')
-                                    ->label('Is enabled?')
+                                    ->label('Enable app')
                                     ->required()
                                     ->inline(false)
                                     ->columnSpan(3),
                                 Toggle::make('enable_client_messages')
-                                    ->label('Is client messages enabled?')
+                                    ->label('Enable client events')
+                                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Let clients communicate directly with each other.')
+                                    ->hintColor('primary')
                                     ->required()
                                     ->inline(false)
                                     ->columnSpan(3),
                                 Toggle::make('enable_user_authentication')
-                                    ->label('Is user authentication enabled?')
+                                    ->label('Enable authorized connections')
+                                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Closes connections which fail to subscribe to a private/presence channel within a timeout.')
+                                    ->hintColor('primary')
                                     ->required()
                                     ->inline(false)
                                     ->columnSpan(3),
@@ -190,22 +202,43 @@ class EditApplication extends EditRecord
                                     ->maxValue(127)
                                     ->columnSpan(3),
                             ]),
-                        Tab::make('Webhooks')
-                            ->icon('heroicon-o-globe-alt')
-                            ->schema([
-                                Textarea::make('webhooks')
-                                    ->hint(
-                                        new HtmlString('<a href="https://docs.soketi.app/advanced-usage/app-webhooks" title="Consider reading Pusher documentation" target="_blank">Documentation</a>')
-                                    )
-                                    ->hintColor('primary')
-                                    ->required()
-                                    ->json()
-                                    ->afterStateHydrated(fn (TextArea $component, array $state) => $component->state(json_encode($state)))
-                                    ->autosize()
-                                    ->columnSpan(3),
-                            ]),
                     ])
                     ->persistTabInQueryString(),
+                Repeater::make('webhooks')
+                    ->addActionLabel('Add webhook')
+                    ->itemLabel('Webhook')
+                    ->hint(
+                        new HtmlString('<a href="https://docs.soketi.app/advanced-usage/app-webhooks" title="Consider reading Pusher documentation" target="_blank">Documentation</a>')
+                    )
+                    ->hintColor('primary')
+                    ->columns(4)
+                    ->columnSpan(4)
+                    ->schema([
+                        TextInput::make('url')->label('Webhook URL')->required()->url()->maxLength(100)->columnSpan(3),
+                        CheckboxList::make('event_types')
+                            ->options(WebhookEvent::toTitledArray())
+                            ->columns(3)
+                            ->columnSpan(3),
+                        KeyValue::make('headers')
+                            ->addActionLabel('Add header')
+                            ->hint(
+                                new HtmlString('<a href="https://docs.soketi.app/advanced-usage/app-webhooks#webhook-headers" target="_blank">Documentation</a>')
+                            )
+                            ->hintColor('primary')
+                            ->keyLabel('Header')
+                            ->columnSpan(3),
+                        KeyValue::make('filter')
+                            ->hint(
+                                new HtmlString('<a href="https://docs.soketi.app/advanced-usage/app-webhooks#filtering-webhooks" target="_blank">Documentation</a>')
+                            )
+                            ->hintColor('primary')
+                            ->default(array_fill_keys(WebhookFilter::values(), ''))
+                            ->addable(false)
+                            ->editableKeys(false)
+                            ->deletable(false)
+                            ->columnSpan(3),
+                    ])
+                    ->reorderable(false),
             ]);
     }
 }

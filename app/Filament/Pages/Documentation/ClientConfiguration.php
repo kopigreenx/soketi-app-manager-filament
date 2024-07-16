@@ -8,7 +8,7 @@ class ClientConfiguration extends Page
 {
     protected static ?string $navigationGroup = 'Documentation';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     protected static string $view = 'filament.pages.documentation.client-configuration';
 
@@ -17,6 +17,14 @@ class ClientConfiguration extends Page
         return [
             '#' => 'Documentation',
             '/client-configuration' => 'Client Configuration',
+        ];
+    }
+
+    protected function getViewData(): array
+    {
+        return [
+            'host' => parse_url(config('app.url'), PHP_URL_HOST),
+            'port' => env('APP_PORT', 6001),
         ];
     }
 }
