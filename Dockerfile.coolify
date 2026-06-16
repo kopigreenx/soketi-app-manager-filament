@@ -1,0 +1,30 @@
+# This dockerfile creates an standalone
+# image for the base application only.
+
+FROM serversideup/php:8.1-fpm-nginx
+
+ENV PHP_OPCACHE_ENABLE=1
+
+USER root
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y git nano \
+    && install-php-extensions intl \
+    && apt-get -y autoremove \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Clone the repository
+RUN git clone https://github.com/rahulhaque/soketi-app-manager-filament /var/www/html
+
+# Set appropriate permission
+RUN chown -R www-data:www-data /var/www/html
+
+# Switch to non-root user
+USER www-data
+
+# Install composer dependencies
+RUN composer install --no-interaction --optimize-autoloader --no-dev \
+    && rm -rf /var/www/html/.composer/cache
+
+EXPOSE 8080

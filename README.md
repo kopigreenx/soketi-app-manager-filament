@@ -6,6 +6,7 @@ Simple frontend for [Soketi](https://soketi.app/) websocket server with a intuit
 - Dashboard to show realtime server stats and app connections.
 - Dashboard to show realtime Soketi application connections.
 - Create and manage (serve, view, edit, delete and filter) multiple Soketi applications.
+- Automatic soketi application cache management.
 - Interactive UI for managing Soketi application webhooks.
 - Interactive UI for managing webhook headers.
 - Interactive UI for managing webhook filters.
@@ -26,7 +27,7 @@ I invest a lot of time and effort in open-source. If you like this project, plea
 - MySQL^8|PostgreSQL^13.3
 - Redis^6
 - NodeJS^14
-- Soketi running with MySQL|PostgreSQL
+- Soketi running with MySQL|PostgreSQL and Redis caching enabled
 
 ## Local Installation
 
@@ -88,22 +89,14 @@ docker compose build
 # > Install composer dependencies
 # > Generate application key
 # > Run database migration
+# > Create admin user
 # Press `ctrl-c` when done
 docker compose up
 
 # Now run it in background
 docker compose up -d
 
-# Drop to application shell
-docker compose exec -u soketi soketi-app-manager bash
-
-# Seed database
-php artisan db:seed
-
-# Logout from shell
-exit
-
-# Visit application
+# Visit the application
 http://localhost:APP_PORT
 
 # Stop the application or
@@ -112,6 +105,24 @@ docker compose stop
 # Stop and remove the containers
 docker compose down
 ```
+
+## Coolify Installation
+
+Follow the steps to deploy in [Coolify](https://coolify.io/) -
+
+- Create a `Docker Compose` application and copy paste the content from `docker-compose.coolify.yml`.
+- Create and deploy your preferred MySQL or PostgreSQL **database**, **redis** and **soketi** services.
+- Go to `Environment Variables` of Soketi App Manager service and fill out the variables except `APP_KEY`.
+- Click `Save` and `Deploy`.
+- After that go to terminal and run the followin -
+```bash
+# Keep the key for APP_KEY
+php artisan key:generate --show
+
+# Migrate the database
+php artisan db:seed
+```
+- Set the `APP_KEY` environment variable and `Restart` the service.
 
 ## Credentials
 

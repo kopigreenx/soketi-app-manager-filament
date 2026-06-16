@@ -27,9 +27,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($this->app->environment('production')) {
+            $this->app['request']->server->set('HTTPS', 'on');
+        }
+
         Model::unguard();
 
-        Blueprint::mixin(new BluePrintMixins());
+        Blueprint::mixin(new BluePrintMixins);
 
         Blade::directive('markdown', function () {
             return "<?php echo Illuminate\Mail\Markdown::parse(<<<HEREDOC";
